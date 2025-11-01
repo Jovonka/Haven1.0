@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 public/videos/hero.mp4
 dist/videos/hero.mp4
+public/videos/hero.mp4
+dist/videos/hero.mp4
