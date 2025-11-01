@@ -132,6 +132,7 @@ export default function Reflection() {
     requestAnimationFrame(render);
 
     return () => window.removeEventListener("resize", resize);
+    
   }, []);
 
 // 🌍 Background sphere (Three.js) — scroll-linked, responsive, evolving, and growing
@@ -305,62 +306,116 @@ useEffect(() => {
       renderer.dispose();
     };
   }, []);
+
+
+
+
   
-// 🌟 Floating overlay line animations (only visible during their section)
-useEffect(() => {
-    const overlays = gsap.utils.toArray(".overlay-line") as HTMLElement[];
-  
-    overlays.forEach((el) => {
-      const sectionIndex = Number(el.dataset.section);
-      const trigger = document.querySelector(`.section:nth-of-type(${sectionIndex})`);
-  
-      if (!trigger) return;
-  
-      gsap.timeline({
-        scrollTrigger: {
-          trigger,
-          start: "top center",
-          end: "bottom center",
-          scrub: true,
-          onEnter: () =>
-            gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }),
-          onLeave: () =>
-            gsap.to(el, { opacity: 0, y: -40, duration: 0.5, ease: "power2.inOut" }),
-          onEnterBack: () =>
-            gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }),
-          onLeaveBack: () =>
-            gsap.to(el, { opacity: 0, y: 40, duration: 0.5, ease: "power2.inOut" }),
-        },
-      });
-    });
-  
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        document.body.classList.add("scrolled");
+      } else {
+        document.body.classList.remove("scrolled");
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  
+// 🖤 Intro fade animation
+useEffect(() => {
+  const fade = document.querySelector(".intro-fade");
+  const overlays = document.querySelector(".overlay-lines") as HTMLElement;
+  const main = document.querySelector(".main") as HTMLElement;
+  if (!fade || !overlays || !main) return;
+
+  gsap.set(main, { opacity: 0 });
+  gsap.set(overlays, { opacity: 0 });
+  gsap.set(fade, { opacity: 1, pointerEvents: "auto" });
+
+  const tl = gsap.timeline();
+  tl.to(overlays, { opacity: 1, duration: 0.8, ease: "power1.out", delay: 0.5 })
+    .to(
+      fade,
+      { opacity: 0, duration: 0.8, ease: "power2.inOut" },
+      "-=0.8"
+    )
+    .to(main, { opacity: 1, duration: 0.8, ease: "power2.out" }, "-=0.5")
+    .set(fade, { display: "none", pointerEvents: "none" });
+}, []);
+
   
   useEffect(() => {
     const overlays = gsap.utils.toArray(".overlay-line") as HTMLElement[];
     const sections = gsap.utils.toArray(".section") as HTMLElement[];
   
-    overlays.forEach((el, i) => {
-      const trigger = sections[i]; // section 1, 2, 4 will match their overlay
+    // Hide all overlays initially
+    gsap.set(overlays, { opacity: 0, y: 40 });
+  
+    overlays.forEach((overlay) => {
+      const sectionKey = overlay.dataset.key;
+      if (!sectionKey) return;
+  
+      // Find the matching section by key
+      const trigger = sections.find(
+        (section) => section.getAttribute("data-key") === sectionKey
+      );
       if (!trigger) return;
   
-      gsap.set(el, { opacity: 0, y: 50 });
-  
-      gsap.to(el, {
-        opacity: 1,
-        y: 0,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger,
-          start: "top center",
-          end: "bottom center",
-          scrub: true,
-          onLeave: () =>
-            gsap.to(el, { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }),
-          onLeaveBack: () =>
-            gsap.to(el, { opacity: 0, y: 40, duration: 0.4, ease: "power2.in" }),
+      ScrollTrigger.create({
+        trigger,
+        start: "top center",
+        end: "bottom center",
+        scrub: true,
+        onEnter: () => {
+          overlays.forEach((o) => {
+            if (o !== overlay)
+              gsap.to(o, {
+                opacity: 0,
+                y: -40,
+                duration: 0.4,
+                ease: "power2.inOut",
+              });
+          });
+          gsap.to(overlay, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power2.out",
+          });
         },
+        onEnterBack: () => {
+          overlays.forEach((o) => {
+            if (o !== overlay)
+              gsap.to(o, {
+                opacity: 0,
+                y: 40,
+                duration: 0.4,
+                ease: "power2.inOut",
+              });
+          });
+          gsap.to(overlay, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power2.out",
+          });
+        },
+        onLeave: () =>
+          gsap.to(overlay, {
+            opacity: 0,
+            y: -40,
+            duration: 0.4,
+            ease: "power2.inOut",
+          }),
+        onLeaveBack: () =>
+          gsap.to(overlay, {
+            opacity: 0,
+            y: 40,
+            duration: 0.4,
+            ease: "power2.inOut",
+          }),
       });
     });
   
@@ -370,35 +425,35 @@ useEffect(() => {
   
   
   
-  // ✨ CTA reveal animation
+  
+  
+  
   useEffect(() => {
     const lastSection = document.querySelector(".section:last-of-type");
-    if (!lastSection || !ctaRef.current) return;
-
+    const overlay = document.querySelector(".cta-overlay");
+    if (!lastSection || !overlay) return;
+  
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const ctas = ctaRef.current!.children;
         if (entry.isIntersecting) {
-          gsap.to(ctas, {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            stagger: 0.1,
-            ease: "power2.out",
-          });
+          overlay.classList.add("active");
         } else {
-          gsap.to(ctas, { opacity: 0, duration: 0.3 });
+          overlay.classList.remove("active");
         }
       },
       { threshold: 0.6 }
     );
-
+  
     observer.observe(lastSection);
     return () => observer.disconnect();
   }, []);
+  
 
   return (
     <div className="scroll-root" ref={containerRef}>
+      {/* 🖤 Black fade intro */}
+<div className="intro-fade"></div>
+
       <canvas ref={canvasRef} className="animated-bg"></canvas>
 
      {/* 💫 CTA buttons only */}
@@ -412,16 +467,21 @@ useEffect(() => {
 
 {/* 🌤️ Floating overlay lines */}
 <div className="overlay-lines">
-  <div className="overlay-line" data-section="1">
+  <div className="overlay-line overlay-line1" data-key="one">
     <strong>“What am I supposed to do now?”</strong>
   </div>
-  <div className="overlay-line" data-section="2">
+
+  <div className="overlay-line overlay-line2" data-key="two">
     <strong>You may not feel it, but hope is closer than you know.</strong>
   </div>
-  <div className="overlay-line" data-section="4">
-    <strong>It’s okay to not know what to do in times like this. Sometimes the bravest response to tragedy is  allowing someone to walk through it with you.</strong>
+
+  <div className="overlay-line overlay-line4" data-key="four">
+    <strong>Sometimes the bravest response to tragedy is allowing someone to walk through it with you.</strong>
   </div>
 </div>
+
+
+
 
 
 
@@ -441,18 +501,80 @@ useEffect(() => {
     </div>
   </section>
 
-  {SECTIONS.map((s, i) => (
+  {SECTIONS.map((s) => {
+  // Default layout
+  const baseStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+   
+  };
+
+  if (s.key === "one") {
+    baseStyle.alignItems = "flex-end";
+    baseStyle.paddingBottom = "5rem";
+  } else if (s.key === "two") {
+    baseStyle.alignItems = "flex-start";
+    baseStyle.paddingTop = "5rem";
+  }
+
+  // 🃏 Section Four (special layout)
+  if (s.key === "four") {
+    return (
+      <section
+        key={s.key}
+        data-key={s.key}
+        className="section section-four"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          alignItems: "center",
+          textAlign: "center",
+          minHeight: "100vh",
+          padding: "5rem 2rem",
+          position: "relative",
+        }}
+      >
+        {/* overlay line inside section four */}
+       
+
+        <div className="card card--top">
+          <p className="card__text">
+            It’s okay to not know what to do in times like this.
+          </p>
+        </div>
+
+        <div className="card card--bottom">
+          <p className="card__text">
+            That’s what God wants to do; he wants to meet you right where you are,
+            wrap you in his arms, and lead you to a new, hopeful future.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Default for all other sections
+  return (
     <section
       key={s.key}
-      className={`section section--fulltext ${
-        i === SECTIONS.length - 1 ? "section--top" : "section--bottom"
-      }`}
+      data-key={s.key}
+      className={`section section-${s.key}`}
+      style={baseStyle}
     >
       <div className="section__inner">
         <div className="section__text">{s.text}</div>
       </div>
     </section>
-  ))}
+  );
+})}
+
+
+
+
+
 </main>
 
     </div>

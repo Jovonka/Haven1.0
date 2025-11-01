@@ -444,3 +444,21 @@ body{
     font-size: 0.9rem;
   }
 }
+
+.fade-to-black {
+  position: fixed;
+  inset: 0;
+  background: rgb(27, 29, 54);
+  opacity: 0;
+  animation: fadeToBlack 2s ease-in forwards;
+  z-index: 9999;
+}
+
+@keyframes fadeToBlack {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -11,6 +11,7 @@ export default function IntroSequence({ onComplete }: IntroSequenceProps) {
   const [showPanel, setShowPanel] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isFinalFade, setIsFinalFade] = useState(false);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));

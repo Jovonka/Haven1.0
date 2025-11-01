@@ -30,6 +30,7 @@ export default function BreathingExercise({ onComplete }: BreathingExerciseProps
   const [fadeIn, setFadeIn] = useState(true);
   const [inputLocked, setInputLocked] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [fadeToBlack, setFadeToBlack] = useState(false);
 
   const progressRef = useRef<HTMLDivElement>(null);
   const typerRef = useRef<number | null>(null);
@@ -184,12 +185,16 @@ export default function BreathingExercise({ onComplete }: BreathingExerciseProps
     setHidden(true);
     setBgPhase("idle");
     resetProgressBar(1000);
-
-    await new Promise((r) => setTimeout(r, 1200));
-
+  
+    // 🖤 Trigger fade-to-black
+    setFadeToBlack(true);
+  
+    await new Promise((r) => setTimeout(r, 2000)); // allow black fade to complete
+  
     setInputLocked(false);
     if (typeof onComplete === "function") onComplete();
   }
+  
 
   useEffect(() => {
     const handleStart = (e: Event) => {
@@ -276,6 +281,7 @@ export default function BreathingExercise({ onComplete }: BreathingExerciseProps
   return (
     <>
       {fadeIn && <div className="fade-in-overlay"></div>}
+      {fadeToBlack && <div className="fade-to-black"></div>}
       <div className={`background-gradient ${bgPhase}`}></div>
       <div className={`scripture ${hidden ? "hidden" : ""}`}>{scripture}</div>
       <div className={`header ${showUI ? "show" : ""}`}>{headerText}</div>
